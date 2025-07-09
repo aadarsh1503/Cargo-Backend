@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Noto+Sans+Display:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600;700&display=swap');
+
+.font-noto-serif {
+    font-family: 'Noto Serif', serif;
+  }
+
+
+@layer utilities {
+    @keyframes fade-in {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fade-in 0.5s ease-out forwards;
+    }
+}
