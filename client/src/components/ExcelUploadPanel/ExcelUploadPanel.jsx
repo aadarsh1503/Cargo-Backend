@@ -1,19 +1,49 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast'; // 1. Toast library import karein
 import * as api from './excelService';
-
 import FileList from './FileList';
 import Modal from './Modal';
-// ✨ Icons for Message Box and Logout Button
 import { FiCheckCircle, FiXCircle, FiLogOut } from 'react-icons/fi'; 
 import FileUploadForm from './FileUploadForm';
 import "./e.css";
 
-// ✨ Step 1: Accept the 'onLogout' prop from App.jsx
+// 2. Logout confirmation ke liye ek alag, sundar sa component banayein
+const LogoutConfirmation = ({ onConfirm, toastId }) => (
+  <div className="flex flex-col items-center gap-4 p-4 bg-white rounded-lg shadow-2xl border border-gray-200 w-80 font-noto-serif">
+    <div className="relative">
+      <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+        <FiLogOut className="text-red-500 text-4xl animate-pulse" />
+      </div>
+    </div>
+    <h3 className="text-xl font-bold text-gray-800">Are you sure?</h3>
+    <p className="text-sm text-center text-gray-500">
+      You will be logged out and will need to sign in again to manage files.
+    </p>
+    <div className="flex w-full gap-3 mt-2">
+      <button
+        onClick={() => toast.dismiss(toastId)} // Sirf toast ko band karein
+        className="w-full px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-all"
+      >
+        Cancel
+      </button>
+      <button
+        onClick={() => {
+          onConfirm(); // Asli logout function call karein
+          toast.dismiss(toastId); // Toast ko band karein
+        }}
+        className="w-full px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all shadow-md"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+);
+
+
 const ExcelUploadPanel = ({ onLogout }) => {
   const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [processingId, setProcessingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -27,13 +57,21 @@ const ExcelUploadPanel = ({ onLogout }) => {
     try {
       setIsLoading(true);
       const response = await api.getFiles();
-      setFiles(Array.isArray(response.data) ? response.data : []);
+      // Yahan hum frontend-only status logic add kar rahe hain
+      if (Array.isArray(response.data)) {
+        const filesWithStatus = response.data.map(file => ({
+          ...file,
+          status: 'processed' // Maan lete hain ki purani sabhi files published hain
+        }));
+        setFiles(filesWithStatus);
+      } else {
+        setFiles([]);
+      }
     } catch (error) {
       setMessage({ text: 'Error fetching files.', type: 'error' });
       console.error(error);
     } finally {
       setIsLoading(false);
-      clearMessage();
     }
   }, []);
 
@@ -45,15 +83,17 @@ const ExcelUploadPanel = ({ onLogout }) => {
     setIsUploading(true);
     try {
       const response = await api.uploadFile(file);
-      
-      // The backend now sends a consistent, valid object. We can trust it.
       if (response.data && response.data.id) {
-          setFiles(prevFiles => [response.data, ...prevFiles]);
-          setMessage({ text: 'File uploaded successfully!', type: 'success' });
+        // Naye file object mein frontend-only status add karein
+        const newFileWithStatus = {
+          ...response.data,
+          status: 'uploaded'
+        };
+        setFiles(prevFiles => [newFileWithStatus, ...prevFiles]);
+        setMessage({ text: 'File uploaded successfully!', type: 'success' });
       } else {
-          // This case should not happen now, but it's good to have a fallback.
-          console.error("Received an invalid object from the server after upload:", response.data);
-          setMessage({ text: 'Error updating list. Please refresh.', type: 'error' });
+        console.error("Received an invalid object from the server after upload:", response.data);
+        setMessage({ text: 'Error updating list. Please refresh.', type: 'error' });
       }
     } catch (error) {
       console.error("❌ Upload Failed:", error.response?.data || error.message);
@@ -64,19 +104,10 @@ const ExcelUploadPanel = ({ onLogout }) => {
     }
   }, []);
 
-  const handleProcess = useCallback(async (id) => {
-    setProcessingId(id);
-    try {
-      const response = await api.processFile(id);
-      setFiles(files => files.map(f => f.id === id ? response.data : f));
-      setMessage({ text: 'File published successfully!', type: 'success' });
-    } catch (error) {
-      setMessage({ text: error.response?.data?.message || 'Processing failed.', type: 'error' });
-    } finally {
-      setProcessingId(null);
-      clearMessage();
-    }
-  }, []);
+  // Humne 'status' ko permanently "Uploaded" dikhane ka faisla kiya tha, 
+  // isliye 'handleProcess' ki ab zaroorat nahi hai.
+  // const [processingId, setProcessingId] = useState(null);
+  // const handleProcess = useCallback(...) => { ... };
   
   const handleDelete = useCallback(async (id) => {
     if (window.confirm('Are you sure you want to delete this file permanently?')) {
@@ -95,8 +126,9 @@ const ExcelUploadPanel = ({ onLogout }) => {
   }, []);
 
   const openRenameModal = (file) => {
+    // Backend se `fileName` property aa rahi hai
     setFileToRename(file);
-    setNewName(file.file_name);
+    setNewName(file.fileName); 
     setIsModalOpen(true);
   };
 
@@ -106,7 +138,12 @@ const ExcelUploadPanel = ({ onLogout }) => {
 
     try {
       const response = await api.renameFile(fileToRename.id, newName.trim());
-      setFiles(files => files.map(f => f.id === fileToRename.id ? response.data : f));
+      // Backend se jo response aa raha hai, usmein frontend status add karein
+      const updatedFileWithStatus = {
+          ...response.data,
+          status: fileToRename.status // Purana status barkarar rakhein
+      };
+      setFiles(files => files.map(f => f.id === fileToRename.id ? updatedFileWithStatus : f));
       setMessage({ text: 'File renamed successfully!', type: 'success' });
       setIsModalOpen(false);
     } catch (error) {
@@ -116,16 +153,36 @@ const ExcelUploadPanel = ({ onLogout }) => {
     }
   };
 
+  // 3. Naya function jo toast ko trigger karega
+  const handleLogoutClick = () => {
+    toast(
+      (t) => (
+        <LogoutConfirmation 
+          onConfirm={onLogout} 
+          toastId={t.id} 
+        />
+      ),
+      {
+        duration: Infinity, // User ke action lene tak ruko
+        style: {
+          background: 'transparent',
+          boxShadow: 'none',
+          padding: 0,
+        },
+      }
+    );
+  };
+
+
   return (
     <div className="panel-container font-noto-serif">
-        {/* ✨ Step 2: Create a header section for title and logout button */}
         <div className="panel-header">
             <div>
                 <h1 className="page-heading text-gradient-heading font-noto-serif">File Management</h1>
                 <p className="page-subheading font-noto-serif">Upload, publish, and manage your Excel data sheets.</p>
             </div>
-            {/* ✨ Step 3: Add the logout button and connect it to the onLogout function */}
-            <button onClick={onLogout} className="btn-logout">
+            {/* 4. Logout button ab naye handler ko call karega */}
+            <button onClick={handleLogoutClick} className="btn-logout">
                 <FiLogOut size={18} />
                 <span>Logout</span>
             </button>
@@ -148,11 +205,10 @@ const ExcelUploadPanel = ({ onLogout }) => {
             <FileList 
                 files={files}
                 isLoading={isLoading}
-                // onProcess={handleProcess}
                 onRename={openRenameModal}
                 onDelete={handleDelete}
-                // processingId={processingId}
                 deletingId={deletingId}
+                // onProcess aur processingId hata diye gaye hain
             />
         </div>
 
@@ -162,7 +218,7 @@ const ExcelUploadPanel = ({ onLogout }) => {
                 <input
                     type="text"
                     id="newName"
-                    value={newName}
+                    value={newName || ''} // Safety check
                     onChange={(e) => setNewName(e.target.value)}
                     className="modal-form-input"
                     autoFocus
