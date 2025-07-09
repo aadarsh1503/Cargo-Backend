@@ -1,8 +1,10 @@
+// FileList.jsx
+
 import React from 'react';
 import FileItem from './FileItem';
 import { FiRefreshCw, FiInbox } from 'react-icons/fi';
 
-const FileList = ({ files, isLoading, onProcess, onRename, onDelete, processingId, deletingId }) => {
+const FileList = ({ files, isLoading, onRename, onDelete, deletingId }) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-16">
@@ -23,27 +25,27 @@ const FileList = ({ files, isLoading, onProcess, onRename, onDelete, processingI
 
   return (
     <div className="overflow-x-auto">
-      {/* ✨ Apply the 'file-table' class for vertical spacing */}
       <table className="min-w-full file-table">
         <thead className="bg-transparent">
           <tr>
             <th className="px-6 pb-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">File Details</th>
             <th className="px-6 pb-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Size</th>
-            <th className="px-6 pb-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+            
+            {/* ===== STATUS HEADER HATA DIYA GAYA HAI ===== */}
+            
             <th className="px-6 pb-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Uploaded At</th>
             <th className="px-6 pb-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        {/* ✨ tbody is now just a container, no styling needed here */}
         <tbody>
           {files.map((file) => (
             <FileItem
-              key={file.id}
+              key={file.id} // Yeh abhi bhi theek hai, hum 'file.id' ko null aane se rokenge
               file={file}
-              onProcess={onProcess}
+              // onProcess={onProcess} // Hata diya
               onRename={onRename}
               onDelete={onDelete}
-              processingId={processingId}
+              // processingId={processingId} // Hata diya
               deletingId={deletingId}
             />
           ))}

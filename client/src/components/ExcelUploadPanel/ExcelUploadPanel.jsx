@@ -139,10 +139,10 @@ const ExcelUploadPanel = ({ onLogout }) => {
             <FileList 
                 files={files}
                 isLoading={isLoading}
-                onProcess={handleProcess}
+                // onProcess={handleProcess}
                 onRename={openRenameModal}
                 onDelete={handleDelete}
-                processingId={processingId}
+                // processingId={processingId}
                 deletingId={deletingId}
             />
         </div>
