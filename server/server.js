@@ -10,7 +10,7 @@ const app = express();
 // --- CORS Configuration ---
 // 2. Configure CORS to allow requests ONLY from your Vite/React frontend
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174','https://cargo-backend-black.vercel.app/'],
+  origin: ['http://localhost:5173', 'http://localhost:5174','https://cargo-backend-black.vercel.app'],
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions)); // 3. Use the cors middleware with your specific options
