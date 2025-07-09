@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/excels';
+const API_URL = 'https://cargo-backend-s9eg.onrender.com/api/excels';
 
 // Create a new Axios instance
 const api = axios.create({

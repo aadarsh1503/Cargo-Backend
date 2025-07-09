@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Ensure your backend is running on the correct port (e.g., 5000)
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = 'https://cargo-backend-s9eg.onrender.com/api/auth';
 
 const api = axios.create({
     baseURL: API_URL,
