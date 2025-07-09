@@ -1,13 +1,17 @@
 // FileItem.jsx
-
 import React from 'react';
-import { FiFile, FiEdit, FiTrash2, FiRefreshCw } from 'react-icons/fi';
+import { FiFile, FiCheckSquare, FiEdit, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 
-const FileItem = ({ file, onRename, onDelete, deletingId }) => {
-  // isProcessing and statusPill are no longer needed
+const FileItem = ({ file, onProcess, onRename, onDelete, processingId, deletingId }) => {
+  const isProcessing = processingId === file.id;
   const isDeleting = deletingId === file.id;
+  
+  const statusPill = {
+    processed: 'bg-green-100 text-green-800',
+    uploaded: 'bg-blue-100 text-blue-800',
+    failed: 'bg-red-100 text-red-800',
+  };
 
-  // ... (ActionButton component remains the same) ...
   const ActionButton = ({ onClick, icon, text, disabled, colorClass, isWorking }) => (
     <button
       onClick={onClick}
@@ -22,49 +26,63 @@ const FileItem = ({ file, onRename, onDelete, deletingId }) => {
   );
 
   return (
-    // The key is now on the top-level element returned by map
-    <tr className="table-row-hover transition-colors duration-200">
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center">
-          <FiFile className="h-6 w-6 text-blue-500" />
-          <div className="ml-4">
-            <div className="text-sm font-semibold text-gray-900 truncate max-w-xs">{file.file_name || 'Unnamed File'}</div>
-            <a href={file.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-blue-600">
-              View Original
-            </a>
+    // Check for file and file.id to prevent crashes
+    file && file.id ? (
+      <tr className="table-row-hover transition-colors duration-200">
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="flex items-center">
+            <FiFile className="h-6 w-6 text-blue-500" />
+            <div className="ml-4">
+              {/* Use fileName and filePath from the consistent backend response */}
+              <div className="text-sm font-semibold text-gray-900 truncate max-w-xs">{file.fileName}</div>
+              <a href={file.filePath} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-blue-600">
+                View Original
+              </a>
+            </div>
           </div>
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-        {/* Added a check for file_size to prevent crash if it's missing */}
-        {file.file_size ? `${Math.round(file.file_size / 1024)} KB` : 'N/A'}
-      </td>
-      
-      {/* ===== STATUS COLUMN POORI TARAH HATA DIYA GAYA HAI ===== */}
-      
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-        {/* Added a check for uploaded_at */}
-        {file.uploaded_at ? new Date(file.uploaded_at).toLocaleString() : 'Just now'}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-        <div className="flex items-center gap-4">
-          <ActionButton
-            onClick={() => onRename(file)}
-            icon={<FiEdit size={16} />}
-            text="Rename"
-            disabled={isDeleting} // isProcessing removed
-            colorClass="text-yellow-600"
-          />
-          <ActionButton
-            onClick={() => onDelete(file.id)}
-            icon={<FiTrash2 size={16} />}
-            text="Delete"
-            isWorking={isDeleting}
-            colorClass="text-red-600"
-          />
-        </div>
-      </td>
-    </tr>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+          {`${Math.round(file.fileSize / 1024)} KB`}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          {/* Status logic is purely frontend now */}
+          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+            Uploaded
+          </span>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+          {new Date(file.uploadedAt).toLocaleString()}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+          <div className="flex items-center gap-4">
+            {/* "Publish" button ko uncomment karein */}
+            {/* <ActionButton
+              onClick={() => onProcess(file.id)}
+              icon={<FiCheckSquare size={16} />}
+              text="Publish"
+              // Button tabhi disable hoga jab status 'processed' ho
+              disabled={file.status === 'processed'}
+              isWorking={isProcessing}
+              colorClass="text-green-600"
+            /> */}
+            {/* <ActionButton
+              onClick={() => onRename(file)}
+              icon={<FiEdit size={16} />}
+              text="Rename"
+              disabled={isProcessing || isDeleting}
+              colorClass="text-yellow-600"
+            /> */}
+            <ActionButton
+              onClick={() => onDelete(file.id)}
+              icon={<FiTrash2 size={16} />}
+              text="Delete"
+              isWorking={isDeleting}
+              colorClass="text-red-600"
+            />
+          </div>
+        </td>
+      </tr>
+    ) : null
   );
 };
 

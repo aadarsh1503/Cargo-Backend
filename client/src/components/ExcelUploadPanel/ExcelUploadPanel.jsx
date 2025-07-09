@@ -45,9 +45,18 @@ const ExcelUploadPanel = ({ onLogout }) => {
     setIsUploading(true);
     try {
       const response = await api.uploadFile(file);
-      setFiles(prevFiles => [response.data, ...prevFiles]);
-      setMessage({ text: 'File uploaded successfully!', type: 'success' });
+      
+      // The backend now sends a consistent, valid object. We can trust it.
+      if (response.data && response.data.id) {
+          setFiles(prevFiles => [response.data, ...prevFiles]);
+          setMessage({ text: 'File uploaded successfully!', type: 'success' });
+      } else {
+          // This case should not happen now, but it's good to have a fallback.
+          console.error("Received an invalid object from the server after upload:", response.data);
+          setMessage({ text: 'Error updating list. Please refresh.', type: 'error' });
+      }
     } catch (error) {
+      console.error("❌ Upload Failed:", error.response?.data || error.message);
       setMessage({ text: error.response?.data?.message || 'Upload failed.', type: 'error' });
     } finally {
       setIsUploading(false);
