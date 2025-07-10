@@ -23,9 +23,7 @@ const LoginPage = () => {
       buttonText="Log In"
       onSubmit={handleLogin}
       isSignup={false}
-      footerText="Don't have an account?"
-      footerLinkText=" Sign Up"
-      footerLinkTo="/signup"
+     
     />
   );
 };
